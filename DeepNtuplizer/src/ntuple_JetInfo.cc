@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/Math/interface/angle.h"
 
 using namespace std;
 
@@ -72,6 +73,12 @@ void ntuple_JetInfo::initBranches(TTree* tree){
     addBranch(tree,"isPhysS",&isPhysS_, "isPhysS_/i");
     addBranch(tree,"isPhysG",&isPhysG_, "isPhysG_/i");
     addBranch(tree,"isPhysUndefined",&isPhysUndefined_, "isPhysUndefined_/i");
+
+    //LL
+    addBranch(tree,"isFromLLgno",       &isFromLLgno_,       "isFromLLgno_/i");
+    addBranch(tree,"genLL_decayLength", &genLL_decayLength_, "geLL_decayLength_/f"    );	
+    addBranch(tree,"genLL_decayAngle",  &genLL_decayAngle_,  "geLL_decayAngle_/f"    );
+    addBranch(tree,"genLL_lifetime",    &genLL_lifetime_,    "geLL_lifetime_/f"    );	
 
     // jet variables
     //b=tree->Branch("jet_pt", &jet_pt_);
@@ -147,9 +154,11 @@ void ntuple_JetInfo::readEvent(const edm::Event& iEvent){
 
     iEvent.getByToken(genParticlesToken_, genParticlesHandle);
 
-
     iEvent.getByToken(muonsToken_, muonsHandle);
     iEvent.getByToken(electronsToken_, electronsHandle);
+
+    iEvent.getByToken(displacedGenVerticesToken_, displacedGenVerticesHandle);
+
 
     event_no_=iEvent.id().event();
 
@@ -377,6 +386,45 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     }
 
     if(isUndefined_ && isPhysUndefined_) returnval=false; //skip event, if neither standard flavor definition nor physics definition fallback define a "proper flavor"
+
+
+    //LL gluino
+    isFromLLgno_ = 0;
+    genLL_decayLength_ = -1;
+    genLL_decayAngle_ = -1;
+    genLL_lifetime_ = -1;
+
+    if(jet.genJet()!=NULL){
+    
+      float dR_min = 0.4;
+
+      for(const auto &genVert : *displacedGenVerticesHandle){
+
+	for(const auto &genJet : genVert.genJets){
+	  
+	  float dR = reco::deltaR(*jet.genJet(),*genJet);
+	  
+	  if(dR<dR_min){
+
+	    dR_min = dR;
+	    genLL_decayLength_ = genVert.d3d();	    
+
+	    if(!genVert.motherLongLivedParticle.isNull()){
+	      const auto &mother = *(genVert.motherLongLivedParticle);
+	      genLL_lifetime_ = genLL_decayLength_ * mother.mass()/mother.p();
+	      genLL_decayAngle_ = angle(genJet->p4(),mother.p4());
+	      if(abs(mother.pdgId())==1000021) isFromLLgno_ = 1;
+	    }	    
+
+	  }
+
+	}		
+	
+      }
+
+    }      
+
+
 
     pat::JetCollection h;
 

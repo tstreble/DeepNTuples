@@ -5,6 +5,8 @@
 <use name="TrackingTools/IPTools"/>
 <use name="DeepNTuples/JetAnalysis"/>
 <use name="RecoBTag/DeepFlavour"/>
+<use name="LLPTagger/DisplacedVertex"/>
+
 
 <use   name="root"/>
 <use   name="rootrflx"/>

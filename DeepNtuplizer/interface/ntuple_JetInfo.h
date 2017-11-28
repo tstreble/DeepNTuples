@@ -70,6 +70,10 @@ public:
         electronsToken_ = electronsToken;
     }
 
+    void setDisplacedGenVerticesToken(edm::EDGetTokenT<DisplacedGenVertexCollection> displacedGenVerticesToken) {
+        displacedGenVerticesToken_ = displacedGenVerticesToken;
+    }
+
     void setUseHerwigCompatibleMatching(const bool use){
         useherwcompat_matching_=use;
     }
@@ -112,6 +116,11 @@ public:
     edm::Handle<pat::MuonCollection> muonsHandle;
     edm::Handle<pat::ElectronCollection> electronsHandle;
 
+    //Displaced gen vertices
+    edm::EDGetTokenT<DisplacedGenVertexCollection> displacedGenVerticesToken_;
+
+    edm::Handle<DisplacedGenVertexCollection> displacedGenVerticesHandle;
+
 
     TRandom3 TRandom_;
     float gluonReduction_;
@@ -146,12 +155,12 @@ public:
     int isCC_;
     int isUD_;
     int isS_;
-    int isG_;
+    int isG_;    
     int isUndefined_;
     float genDecay_;
     int isLeptonicB_;
     int isLeptonicB_C_;
-    int isTau_;
+    int isTau_;  
 
     //truth labeling with fallback to physics definition for light/gluon/undefined of standard flavor definition
     int isPhysB_;
@@ -167,6 +176,12 @@ public:
     int isPhysLeptonicB_;
     int isPhysLeptonicB_C_;
     int isPhysTau_;
+
+    //LL
+    int isFromLLgno_;
+    float genLL_decayLength_;
+    float genLL_decayAngle_;
+    float genLL_lifetime_;
 
     // global variables
     float npv_;

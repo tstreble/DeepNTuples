@@ -12,7 +12,7 @@ options.register('maxEvents',-1,VarParsing.VarParsing.multiplicity.singleton,Var
 options.register('skipEvents', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "skip N events")
 options.register('job', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "job number")
 options.register('nJobs', 1, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "total jobs")
-options.register('release','8_0_1', VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.string,"release number (w/o CMSSW)")
+options.register('release','9_2_5', VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.string,"release number (w/o CMSSW)")
 
 print("Using release "+options.release)
 
@@ -48,7 +48,7 @@ process.options = cms.untracked.PSet(
 from PhysicsTools.PatAlgos.patInputFiles_cff import filesRelValTTbarPileUpMINIAODSIM
 
 process.source = cms.Source('PoolSource',
-    fileNames=cms.untracked.vstring (filesRelValTTbarPileUpMINIAODSIM),
+                            fileNames=cms.untracked.vstring ('root://cms-xrd-global.cern.ch//store/mc/RunIISummer16MiniAODv2/SMS-T1qqqq_ctau-1_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUMoriond17_GridpackScan_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v2/10000/023CA233-4289-E711-9B01-002590FD5A48.root'),
 )
 
 if options.inputScript != '' and options.inputScript != 'DeepNTuples.DeepNtuplizer.samples.TEST':
@@ -87,29 +87,29 @@ else :
 
 if int(options.release.replace("_",""))>=840 :
  bTagDiscriminators = [
-     'softPFMuonBJetTags',
-     'softPFElectronBJetTags',
-         'pfJetBProbabilityBJetTags',
-         'pfJetProbabilityBJetTags',
+     #'softPFMuonBJetTags',
+     #'softPFElectronBJetTags',
+     #'pfJetBProbabilityBJetTags',
+     #'pfJetProbabilityBJetTags',
      'pfCombinedInclusiveSecondaryVertexV2BJetTags',
-         'pfDeepCSVJetTags:probudsg', #to be fixed with new names
-         'pfDeepCSVJetTags:probb',
-         'pfDeepCSVJetTags:probc',
-         'pfDeepCSVJetTags:probbb',
-         'pfDeepCSVJetTags:probcc',
+     'pfDeepCSVJetTags:probudsg', #to be fixed with new names
+     'pfDeepCSVJetTags:probb',
+     'pfDeepCSVJetTags:probc',
+     'pfDeepCSVJetTags:probbb',
+     #'pfDeepCSVJetTags:probcc',
  ]
 else :
-  bTagDiscriminators = [
-     'softPFMuonBJetTags',
-     'softPFElectronBJetTags',
-         'pfJetBProbabilityBJetTags',
-         'pfJetProbabilityBJetTags',
+ bTagDiscriminators = [
+     #'softPFMuonBJetTags',
+     #'softPFElectronBJetTags',
+     #'pfJetBProbabilityBJetTags',
+     #'pfJetProbabilityBJetTags',
      'pfCombinedInclusiveSecondaryVertexV2BJetTags',
-         'deepFlavourJetTags:probudsg', #to be fixed with new names
-         'deepFlavourJetTags:probb',
-         'deepFlavourJetTags:probc',
-         'deepFlavourJetTags:probbb',
-         'deepFlavourJetTags:probcc',
+     'deepFlavourJetTags:probudsg', #to be fixed with new names
+     'deepFlavourJetTags:probb',
+     'deepFlavourJetTags:probc',
+     'deepFlavourJetTags:probbb',
+     #'deepFlavourJetTags:probcc',
  ]
 
 
@@ -132,6 +132,12 @@ updateJetCollection(
         explicitJTA = False
 )
 
+
+process.jecSequence = cms.Sequence(process.patJetCorrFactorsDeepFlavour * process.updatedPatJetsDeepFlavour)
+process.btagSequence = cms.Sequence(process.pfImpactParameterTagInfosDeepFlavour * process.pfInclusiveSecondaryVertexFinderTagInfosDeepFlavour* process.pfDeepCSVTagInfosDeepFlavour*process.pfCombinedInclusiveSecondaryVertexV2BJetTagsDeepFlavour*process.pfDeepCSVJetTagsDeepFlavour)
+process.updateSequence = cms.Sequence(process.patJetCorrFactorsTransientCorrectedDeepFlavour * process.updatedPatJetsTransientCorrectedDeepFlavour)
+
+
 if hasattr(process,'updatedPatJetsTransientCorrectedDeepFlavour'):
 	process.updatedPatJetsTransientCorrectedDeepFlavour.addTagInfos = cms.bool(True) 
 	process.updatedPatJetsTransientCorrectedDeepFlavour.addBTagInfo = cms.bool(True)
@@ -143,7 +149,8 @@ else:
 process.load("DeepNTuples.DeepNtuplizer.QGLikelihood_cfi")
 process.es_prefer_jec = cms.ESPrefer("PoolDBESSource", "QGPoolDBESSource")
 process.load('RecoJets.JetProducers.QGTagger_cfi')
-process.QGTagger.srcJets   = cms.InputTag("selectedUpdatedPatJetsDeepFlavour")
+#process.QGTagger.srcJets   = cms.InputTag("selectedUpdatedPatJetsDeepFlavour")
+process.QGTagger.srcJets   = cms.InputTag("updatedPatJetsTransientCorrectedDeepFlavour")
 process.QGTagger.jetsLabel = cms.string('QGL_AK4PFchs')
 
 
@@ -157,7 +164,8 @@ process.ak4GenJetsRecluster = ak4GenJets.clone(src = 'packedGenParticlesForJetsN
  
  
 process.patGenJetMatchWithNu = cms.EDProducer("GenJetMatcher",  # cut on deltaR; pick best by deltaR           
-    src         = cms.InputTag("selectedUpdatedPatJetsDeepFlavour"),      # RECO jets (any View<Jet> is ok) 
+    #src         = cms.InputTag("selectedUpdatedPatJetsDeepFlavour"),      # RECO jets (any View<Jet> is ok) 
+    src         = cms.InputTag("updatedPatJetsTransientCorrectedDeepFlavour"),
     matched     = cms.InputTag("ak4GenJetsWithNu"),        # GEN jets  (must be GenJetCollection)              
     mcPdgId     = cms.vint32(),                      # n/a   
     mcStatus    = cms.vint32(),                      # n/a   
@@ -169,7 +177,8 @@ process.patGenJetMatchWithNu = cms.EDProducer("GenJetMatcher",  # cut on deltaR;
 )
 
 process.patGenJetMatchRecluster = cms.EDProducer("GenJetMatcher",  # cut on deltaR; pick best by deltaR           
-    src         = cms.InputTag("selectedUpdatedPatJetsDeepFlavour"),      # RECO jets (any View<Jet> is ok) 
+    #src         = cms.InputTag("selectedUpdatedPatJetsDeepFlavour"),      # RECO jets (any View<Jet> is ok) 
+    src         = cms.InputTag("updatedPatJetsTransientCorrectedDeepFlavour"),
     matched     = cms.InputTag("ak4GenJetsRecluster"),        # GEN jets  (must be GenJetCollection)              
     mcPdgId     = cms.vint32(),                      # n/a   
     mcStatus    = cms.vint32(),                      # n/a   
@@ -182,6 +191,9 @@ process.patGenJetMatchRecluster = cms.EDProducer("GenJetMatcher",  # cut on delt
 
 process.genJetSequence = cms.Sequence(process.packedGenParticlesForJetsNoNu*process.ak4GenJetsWithNu*process.ak4GenJetsRecluster*process.patGenJetMatchWithNu*process.patGenJetMatchRecluster)
  
+process.load('LLPTagger.DisplacedVertex.GenDisplacedVertices_cff')
+
+
 
 outFileName = options.outputFile + '_' + str(options.job) +  '.root'
 print ('Using output file ' + outFileName)
@@ -192,10 +204,19 @@ process.TFileService = cms.Service("TFileService",
 # DeepNtuplizer
 process.load("DeepNTuples.DeepNtuplizer.DeepNtuplizer_cfi")
 
-process.deepntuplizer.jets = cms.InputTag('selectedUpdatedPatJetsDeepFlavour');
+#process.deepntuplizer.jets = cms.InputTag('selectedUpdatedPatJetsDeepFlavour');
+process.deepntuplizer.jets = cms.InputTag('updatedPatJetsTransientCorrectedDeepFlavour');
 process.deepntuplizer.bDiscriminators = bTagDiscriminators 
 
 if int(options.release.replace("_",""))>=840 :
    process.deepntuplizer.tagInfoName = cms.string('pfDeepCSV')
 
-process.p = cms.Path(process.QGTagger + process.genJetSequence*  process.deepntuplizer)
+process.dump=cms.EDAnalyzer('EventContentAnalyzer')
+
+process.p = cms.Path( process.jecSequence +
+                      process.btagSequence +
+                      process.updateSequence +
+                      process.QGTagger +
+                      process.genJetSequence +
+                      process.DisplacedGenVertexSequence +
+                      process.deepntuplizer)

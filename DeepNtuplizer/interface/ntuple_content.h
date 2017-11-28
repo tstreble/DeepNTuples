@@ -19,6 +19,7 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "DataFormats/Candidate/interface/VertexCompositePtrCandidate.h"
+#include "LLPTagger/DisplacedVertex/interface/DisplacedGenVertex.h"
 #include <iostream>
 #include <math.h>
 #include <iostream>
