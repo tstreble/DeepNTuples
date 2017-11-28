@@ -268,7 +268,7 @@ DeepNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         bool writejet=true;
         for(auto& m:modules_){
-	  if(! m->fillBranches(jet, jetidx, jets.product())){
+	    if(! m->fillBranches(jet, jetidx, jets.product())){
                 writejet=false;
                 if(applySelection_) break;
             }
