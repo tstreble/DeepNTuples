@@ -155,12 +155,12 @@ public:
     int isCC_;
     int isUD_;
     int isS_;
-    int isG_;    
+    int isG_;
     int isUndefined_;
     float genDecay_;
     int isLeptonicB_;
     int isLeptonicB_C_;
-    int isTau_;  
+    int isTau_:
 
     //truth labeling with fallback to physics definition for light/gluon/undefined of standard flavor definition
     int isPhysB_;
