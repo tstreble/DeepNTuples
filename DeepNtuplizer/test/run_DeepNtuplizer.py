@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
 ### parsing job options 
 import sys
+import os
 
 options = VarParsing.VarParsing()
 
@@ -12,9 +13,12 @@ options.register('maxEvents',-1,VarParsing.VarParsing.multiplicity.singleton,Var
 options.register('skipEvents', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "skip N events")
 options.register('job', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "job number")
 options.register('nJobs', 1, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "total jobs")
-options.register('release','9_2_5', VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.string,"release number (w/o CMSSW)")
+options.register('release','8_0_25', VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.string,"release number (w/o CMSSW)")
 
-print("Using release "+options.release)
+cmsswversion = os.environ["CMSSW_VERSION"].split("_")
+
+
+print("Using release "+str(cmsswversion))
 
 
 if hasattr(sys, "argv"):
@@ -71,7 +75,7 @@ process.maxEvents  = cms.untracked.PSet(
 )
 
 
-if int(options.release.replace("_",""))>=840 :
+if int(cmsswversion[1])>=8 and int(cmsswversion[2])>=4:
  bTagInfos = [
         'pfImpactParameterTagInfos',
         'pfInclusiveSecondaryVertexFinderTagInfos',
@@ -85,7 +89,7 @@ else :
  ]
 
 
-if int(options.release.replace("_",""))>=840 :
+if int(cmsswversion[1])>=8 and int(cmsswversion[2])>=4:
  bTagDiscriminators = [
      #'softPFMuonBJetTags',
      #'softPFElectronBJetTags',
@@ -112,7 +116,7 @@ else :
      #'deepFlavourJetTags:probcc',
  ]
 
-
+bTagDiscriminators = ['pfCombinedInclusiveSecondaryVertexV2BJetTags']
 
 jetCorrectionsAK4 = ('AK4PFchs', ['L1FastJet', 'L2Relative', 'L3Absolute'], 'None')
 
@@ -134,7 +138,7 @@ updateJetCollection(
 
 
 process.jecSequence = cms.Sequence(process.patJetCorrFactorsDeepFlavour * process.updatedPatJetsDeepFlavour)
-process.btagSequence = cms.Sequence(process.pfImpactParameterTagInfosDeepFlavour * process.pfInclusiveSecondaryVertexFinderTagInfosDeepFlavour* process.pfDeepCSVTagInfosDeepFlavour*process.pfCombinedInclusiveSecondaryVertexV2BJetTagsDeepFlavour*process.pfDeepCSVJetTagsDeepFlavour)
+#process.btagSequence = cms.Sequence(process.pfImpactParameterTagInfosDeepFlavour * process.pfInclusiveSecondaryVertexFinderTagInfosDeepFlavour* process.pfDeepCSVTagInfosDeepFlavour*process.pfCombinedInclusiveSecondaryVertexV2BJetTagsDeepFlavour*process.pfDeepCSVJetTagsDeepFlavour)
 process.updateSequence = cms.Sequence(process.patJetCorrFactorsTransientCorrectedDeepFlavour * process.updatedPatJetsTransientCorrectedDeepFlavour)
 
 
@@ -191,7 +195,7 @@ process.patGenJetMatchRecluster = cms.EDProducer("GenJetMatcher",  # cut on delt
 
 process.genJetSequence = cms.Sequence(process.packedGenParticlesForJetsNoNu*process.ak4GenJetsWithNu*process.ak4GenJetsRecluster*process.patGenJetMatchWithNu*process.patGenJetMatchRecluster)
  
-process.load('LLPTagger.DisplacedVertex.GenDisplacedVertices_cff')
+process.load('LLPTag.DisplacedVertex.GenDisplacedVertices_cff')
 
 
 
@@ -208,13 +212,13 @@ process.load("DeepNTuples.DeepNtuplizer.DeepNtuplizer_cfi")
 process.deepntuplizer.jets = cms.InputTag('updatedPatJetsTransientCorrectedDeepFlavour');
 process.deepntuplizer.bDiscriminators = bTagDiscriminators 
 
-if int(options.release.replace("_",""))>=840 :
+if int(cmsswversion[1])>=8 and int(cmsswversion[2])>=4:
    process.deepntuplizer.tagInfoName = cms.string('pfDeepCSV')
 
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 
 process.p = cms.Path( process.jecSequence +
-                      process.btagSequence +
+                      #process.btagSequence +
                       process.updateSequence +
                       process.QGTagger +
                       process.genJetSequence +
