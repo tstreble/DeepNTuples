@@ -5,7 +5,7 @@
 <use name="TrackingTools/IPTools"/>
 <use name="DeepNTuples/JetAnalysis"/>
 <use name="RecoBTag/DeepFlavour"/>
-<use name="LLPTag/DataFormats"/>
+<use name="XTag/DataFormats"/>
 
 <use   name="root"/>
 <use   name="rootrflx"/>

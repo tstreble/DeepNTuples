@@ -71,7 +71,7 @@ public:
         electronsToken_ = electronsToken;
     }
 
-    void setDisplacedGenVerticesToken(edm::EDGetTokenT<DisplacedGenVertexCollection> displacedGenVerticesToken) {
+    void setDisplacedGenVerticesToken(edm::EDGetTokenT<xtag::DisplacedGenVertexCollection> displacedGenVerticesToken) {
         displacedGenVerticesToken_ = displacedGenVerticesToken;
     }
 
@@ -118,9 +118,9 @@ public:
     edm::Handle<pat::ElectronCollection> electronsHandle;
 
     //Displaced gen vertices
-    edm::EDGetTokenT<DisplacedGenVertexCollection> displacedGenVerticesToken_;
+    edm::EDGetTokenT<xtag::DisplacedGenVertexCollection> displacedGenVerticesToken_;
 
-    edm::Handle<DisplacedGenVertexCollection> displacedGenVerticesHandle;
+    edm::Handle<xtag::DisplacedGenVertexCollection> displacedGenVerticesHandle;
 
 
     TRandom3 TRandom_;

@@ -176,7 +176,7 @@ DeepNtuplizer::DeepNtuplizer(const edm::ParameterSet& iConfig):
                     iConfig.getParameter<edm::InputTag>("electrons")));
 
     jetinfo->setDisplacedGenVerticesToken(
-            consumes<DisplacedGenVertexCollection>(
+            consumes<xtag::DisplacedGenVertexCollection>(
                     iConfig.getParameter<edm::InputTag>("displGenVertices")));
 
 
