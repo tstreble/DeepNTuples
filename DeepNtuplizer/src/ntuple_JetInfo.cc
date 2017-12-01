@@ -78,7 +78,7 @@ void ntuple_JetInfo::initBranches(TTree* tree){
     addBranch(tree,"isFromLLgno",       &isFromLLgno_,       "isFromLLgno_/i");
     addBranch(tree,"genLL_decayLength", &genLL_decayLength_, "geLL_decayLength_/f"    );	
     addBranch(tree,"genLL_decayAngle",  &genLL_decayAngle_,  "geLL_decayAngle_/f"    );
-    addBranch(tree,"genLL_lifetime",    &genLL_lifetime_,    "geLL_lifetime_/f"    );	
+    addBranch(tree,"genLL_properDecayLength",    &genLL_properDecayLength_,"genLL_properDecayLength/f"    );	
 
     // jet variables
     //b=tree->Branch("jet_pt", &jet_pt_);
@@ -390,42 +390,37 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 
     //LL gluino
     isFromLLgno_ = 0;
-    genLL_decayLength_ = -1;
-    genLL_decayAngle_ = -1;
-    genLL_lifetime_ = -1;
+    genLL_decayLength_ = 0;
+    genLL_decayAngle_ = gRandom->Uniform(0,TMath::Pi());
+    genLL_properDecayLength_ = 0;
 
-    if(jet.genJet()!=NULL){
     
-      float dR_min = 0.4;
+    float dR_min = 1000;
 
-      for(const auto &genVert : *displacedGenVerticesHandle){
+    for(const auto &genVert : *displacedGenVerticesHandle)
+    {
 
-	for(const auto &genJet : genVert.genJets){
-	  
-	  float dR = reco::deltaR(*jet.genJet(),*genJet);
-	  
-	  if(dR<dR_min){
+        for(const auto &genJet : genVert.genJets)
+        {
 
-	    dR_min = dR;
-	    genLL_decayLength_ = genVert.d3d();	    
+            float dR = reco::deltaR(jet,*genJet);
 
-	    if(!genVert.motherLongLivedParticle.isNull()){
-	      const auto &mother = *(genVert.motherLongLivedParticle);
-	      genLL_lifetime_ = genLL_decayLength_ * mother.mass()/mother.p();
-	      genLL_decayAngle_ = angle(genJet->p4(),mother.p4());
-	      if(abs(mother.pdgId())==1000021) isFromLLgno_ = 1;
-	    }	    
+            if(dR<0.4 and dR<dR_min)
+            {
+                dR_min = dR;
+                genLL_decayLength_ = genVert.d3d();	    
 
-	  }
-
-	}		
-	
-      }
-
-    }      
-
-
-
+                if(!genVert.motherLongLivedParticle.isNull())
+                {
+                    const auto &mother = *(genVert.motherLongLivedParticle);
+                    genLL_properDecayLength_ = genLL_decayLength_ * mother.mass()/mother.p();
+                    genLL_decayAngle_ = angle(genJet->p4(),mother.p4());
+                    if(abs(mother.pdgId())==1000021) isFromLLgno_ = 1;
+                }	    
+            }
+        }		
+    }
+    
     pat::JetCollection h;
 
     jet_pt_ = jet.correctedJet("Uncorrected").pt();

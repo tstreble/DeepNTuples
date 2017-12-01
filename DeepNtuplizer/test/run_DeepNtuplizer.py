@@ -50,9 +50,10 @@ process.options = cms.untracked.PSet(
 )
 
 from PhysicsTools.PatAlgos.patInputFiles_cff import filesRelValTTbarPileUpMINIAODSIM
-
+#660673,
 process.source = cms.Source('PoolSource',
-                      	    fileNames=cms.untracked.vstring ('root://cms-xrd-global.cern.ch//store/mc/RunIISummer16MiniAODv2/SMS-T1qqqq_ctau-1_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUMoriond17_GridpackScan_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v2/10000/023CA233-4289-E711-9B01-002590FD5A48.root'),
+                      	    fileNames=cms.untracked.vstring ('root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/SMS-T1qqqq_ctau-0p01_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUMoriond17_GridpackScan_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v2/110000/0C07E448-338A-E711-B877-0CC47A4D75F2.root'),
+                            skipEvents=cms.untracked.uint32(25585)
 )
 
 if options.inputScript != '' and options.inputScript != 'DeepNTuples.DeepNtuplizer.samples.TEST':
@@ -69,7 +70,7 @@ if options.nJobs > 1:
     print (process.source.fileNames)
 #process.source.fileNames = ['file:/uscms/home/verzetti/nobackup/CMSSW_8_0_25/src/DeepNTuples/copy_numEvent100.root']
 
-process.source.skipEvents = cms.untracked.uint32(options.skipEvents)
+#process.source.skipEvents = cms.untracked.uint32(options.skipEvents)
 process.maxEvents  = cms.untracked.PSet( 
     input = cms.untracked.int32 (options.maxEvents) 
 )
@@ -150,8 +151,24 @@ else:
 
 
 # QGLikelihood
-process.load("DeepNTuples.DeepNtuplizer.QGLikelihood_cfi")
-process.es_prefer_jec = cms.ESPrefer("PoolDBESSource", "QGPoolDBESSource")
+
+qgDatabaseVersion = 'cmssw8020_v2'
+
+from CondCore.CondDB.CondDB_cfi import *
+QGPoolDBESSource = cms.ESSource("PoolDBESSource",
+      CondDB.DBParameters,
+      toGet = cms.VPSet(),
+      connect = cms.string("sqlite_file:QGL_"+qgDatabaseVersion+".db"),
+)
+
+for type in ['AK4PFchs','AK4PFchs_antib']:
+  QGPoolDBESSource.toGet.extend(cms.VPSet(cms.PSet(
+    record = cms.string('QGLikelihoodRcd'),
+    tag    = cms.string('QGLikelihoodObject_'+qgDatabaseVersion+'_'+type),
+    label  = cms.untracked.string('QGL_'+type)
+)))
+
+
 process.load('RecoJets.JetProducers.QGTagger_cfi')
 #process.QGTagger.srcJets   = cms.InputTag("selectedUpdatedPatJetsDeepFlavour")
 process.QGTagger.srcJets   = cms.InputTag("updatedPatJetsTransientCorrectedDeepFlavour")
@@ -199,11 +216,8 @@ process.load('LLPTag.DisplacedVertex.GenDisplacedVertices_cff')
 
 
 
-outFileName = options.outputFile + '_' + str(options.job) +  '.root'
-print ('Using output file ' + outFileName)
-
 process.TFileService = cms.Service("TFileService", 
-                                   fileName = cms.string(outFileName))
+                                   fileName = cms.string("deepNtuples.root"))
 
 # DeepNtuplizer
 process.load("DeepNTuples.DeepNtuplizer.DeepNtuplizer_cfi")

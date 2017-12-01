@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 namespace sorting{
 
 /*
@@ -29,23 +30,38 @@ template <class T>
 class sortingClass{
 public:
 
-    sortingClass():sortValA(0),sortValB(0),sortValC(0),t_(0){}
-
-    sortingClass(const T& t, float sortA, float sortB=0, float sortC=0){
-        t_=t;
-        sortValA=sortA;
-        sortValB=sortB;
-        sortValC=sortC;
+    sortingClass(const T& t, float sortA, float sortB, float sortC):
+                sortValA(sortA),sortValB(sortB),sortValC(sortC),t_(t)
+    {     
+        //std::cout<<"init "<<t_<<std::endl;       
     }
     sortingClass(const sortingClass&rhs):
-    sortValA(rhs.sortValA),sortValB(rhs.sortValB),sortValC(rhs.sortValC),t_(rhs.t_)
-    {	}
+        sortValA(rhs.sortValA),sortValB(rhs.sortValB),sortValC(rhs.sortValC),t_(rhs.t_)
+    {
+    }
     
     sortingClass& operator=(const sortingClass&rhs){
-    	sortValA=(rhs.sortValA);
-    	sortValB=(rhs.sortValB);
-    	sortValC=(rhs.sortValC);
-    	t_=(rhs.t_);
+        
+    	sortValA=rhs.sortValA;
+    	sortValB=rhs.sortValB;
+    	sortValC=rhs.sortValC;
+    	//std::cout<<"copy assign "<<t_<<" -> "<<rhs.t_<<std::endl;      
+    	t_=rhs.t_;
+    	return *this;
+    }
+    
+    sortingClass(sortingClass&&rhs):
+        sortValA(rhs.sortValA),sortValB(rhs.sortValB),sortValC(rhs.sortValC),t_(rhs.t_)
+    {
+    }
+    
+    sortingClass& operator=(sortingClass&&rhs)
+    {
+        sortValA=rhs.sortValA;
+    	sortValB=rhs.sortValB;
+    	sortValC=rhs.sortValC;
+    	//std::cout<<"move assign "<<t_<<" -> "<<rhs.t_<<std::endl;      
+    	t_=rhs.t_;
     	return *this;
     }
 
@@ -103,11 +119,11 @@ public:
         return !compareByABC(a,b);
     }
 
- //private:
+
     float sortValA,sortValB,sortValC;
     
 
-
+  private:
     T t_;
 };
 

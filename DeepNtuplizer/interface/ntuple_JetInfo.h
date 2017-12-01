@@ -10,6 +10,7 @@
 
 #include "ntuple_content.h"
 #include "TRandom3.h"
+#include "TMath.h"
 #include <map>
 #include <string>
 
@@ -181,7 +182,7 @@ public:
     int isFromLLgno_;
     float genLL_decayLength_;
     float genLL_decayAngle_;
-    float genLL_lifetime_;
+    float genLL_properDecayLength_;
 
     // global variables
     float npv_;
