@@ -179,7 +179,21 @@ public:
     int isPhysTau_;
 
     //LL
+    //currently considered truth labels in DF: 'isB','isBB','isGBB','isLeptonicB','isLeptonicB_C','isC','isCC','isGCC','isUD','isS','isG','isUndefined'
     int isFromLLgno_;
+    int isFromLLgno_isB_;
+    int isFromLLgno_isBB_;
+    int isFromLLgno_isGBB_;
+    int isFromLLgno_isLeptonicB_;
+    int isFromLLgno_isLeptonicB_C_;
+    int isFromLLgno_isC_;
+    int isFromLLgno_isCC_;
+    int isFromLLgno_isGCC_;
+    int isFromLLgno_isUD_;
+    int isFromLLgno_isS_;
+    int isFromLLgno_isG_;
+    int isFromLLgno_isUndefined_;
+    
     float genLL_decayLength_;
     float genLL_decayAngle_;
     float genLL_properDecayLength_;

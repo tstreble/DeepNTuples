@@ -18,6 +18,42 @@
 
 using namespace std;
 
+
+bool isGluinoHadron(const reco::GenParticle& genParticle)
+{
+    int absPdgId = std::abs(genParticle.pdgId());
+    //int nj  = (absPdgId/      1)%10; //spin
+    //int nq3 = (absPdgId/     10)%10; //quark content
+    int nq2 = (absPdgId/    100)%10; //quark content
+    int nq1 = (absPdgId/   1000)%10; //quark content
+    int nL  = (absPdgId/  10000)%10; //orbit
+    int nR  = (absPdgId/ 100000)%10; //excitation
+    int n   = (absPdgId/1000000)%10; //0 for SM particles, 1 for susy bosons/left-handed fermions, 2 for right-handed fermions
+    if (n!=1 or nR!=0)
+    {
+        return false; //require susy hadron in groundstate
+    }
+    if (nL ==0 and nq1==0 and nq2==9)
+    {
+        return true; //gluinoball
+    }
+    if (nL ==0 and nq1 == 9)
+    {
+        return true; //gluino + 2 quarks
+    }
+    if ( nL == 9)
+    {
+        return true; //gluino + 3 quarks
+    }
+    return false;
+};
+
+bool isGluino(const reco::GenParticle& genParticle)
+{
+    int absPdgId = std::abs(genParticle.pdgId());
+    return absPdgId==1000021;
+};    
+
 void ntuple_JetInfo::getInput(const edm::ParameterSet& iConfig){
 
     gluonReduction_=(iConfig.getParameter<double>("gluonReduction"));
@@ -75,10 +111,24 @@ void ntuple_JetInfo::initBranches(TTree* tree){
     addBranch(tree,"isPhysUndefined",&isPhysUndefined_, "isPhysUndefined_/i");
 
     //LL
-    addBranch(tree,"isFromLLgno",       &isFromLLgno_,       "isFromLLgno_/i");
-    addBranch(tree,"genLL_decayLength", &genLL_decayLength_, "geLL_decayLength_/f"    );	
-    addBranch(tree,"genLL_decayAngle",  &genLL_decayAngle_,  "geLL_decayAngle_/f"    );
-    addBranch(tree,"genLL_properDecayLength",    &genLL_properDecayLength_,"genLL_properDecayLength/f"    );	
+    addBranch(tree,"isFromLLgno",&isFromLLgno_,"isFromLLgno_/i");
+    addBranch(tree,"isFromLLgno_isB",&isFromLLgno_isB_,"isFromLLgno_isB_/i");
+    addBranch(tree,"isFromLLgno_isBB",&isFromLLgno_isBB_,"isFromLLgno_isBB_/i");
+    addBranch(tree,"isFromLLgno_isGBB",&isFromLLgno_isGBB_,"isFromLLgno_isGBB_/i");
+    addBranch(tree,"isFromLLgno_isLeptonicB",&isFromLLgno_isLeptonicB_,"isFromLLgno_isLeptonicB_/i");
+    addBranch(tree,"isFromLLgno_isLeptonicB_C",&isFromLLgno_isLeptonicB_C_,"isFromLLgno_isLeptonicB_C_/i");
+    addBranch(tree,"isFromLLgno_isC",&isFromLLgno_isC_,"isFromLLgno_isC_/i");
+    addBranch(tree,"isFromLLgno_isCC",&isFromLLgno_isCC_,"isFromLLgno_isCC_/i");
+    addBranch(tree,"isFromLLgno_isGCC",&isFromLLgno_isGCC_,"isFromLLgno_isGCC_/i");
+    addBranch(tree,"isFromLLgno_isUD",&isFromLLgno_isUD_,"isFromLLgno_isUD_/i");
+    addBranch(tree,"isFromLLgno_isS",&isFromLLgno_isS_,"isFromLLgno_isS_/i");
+    addBranch(tree,"isFromLLgno_isG",&isFromLLgno_isG_,"isFromLLgno_isG_/i");
+    addBranch(tree,"isFromLLgno_isUndefined",&isFromLLgno_isUndefined_,"isFromLLgno_isUndefined_/i");
+    
+    addBranch(tree,"genLL_decayLength", &genLL_decayLength_,"geLL_decayLength_/f");	
+    addBranch(tree,"genLL_decayAngle",  &genLL_decayAngle_,"geLL_decayAngle_/f");
+    addBranch(tree,"genLL_properDecayLength",&genLL_properDecayLength_,"genLL_properDecayLength/f");	
+
 
     // jet variables
     //b=tree->Branch("jet_pt", &jet_pt_);
@@ -158,7 +208,6 @@ void ntuple_JetInfo::readEvent(const edm::Event& iEvent){
     iEvent.getByToken(electronsToken_, electronsHandle);
 
     iEvent.getByToken(displacedGenVerticesToken_, displacedGenVerticesHandle);
-
 
     event_no_=iEvent.id().event();
 
@@ -390,16 +439,14 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 
     //LL gluino
     isFromLLgno_ = 0;
+
     genLL_decayLength_ = 0;
     genLL_decayAngle_ = gRandom->Uniform(0,TMath::Pi());
     genLL_properDecayLength_ = 0;
 
-    
-    float dR_min = 1000;
-
+    float dR_min = 10000;
     for(const auto &genVert : *displacedGenVerticesHandle)
     {
-
         for(const auto &genJet : genVert.genJets)
         {
 
@@ -415,11 +462,24 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
                     const auto &mother = *(genVert.motherLongLivedParticle);
                     genLL_properDecayLength_ = genLL_decayLength_ * mother.mass()/mother.p();
                     genLL_decayAngle_ = angle(genJet->p4(),mother.p4());
-                    if(abs(mother.pdgId())==1000021) isFromLLgno_ = 1;
-                }	    
+                    if (isGluino(mother) or isGluinoHadron(mother)) isFromLLgno_ = 1;
+                }
             }
         }		
     }
+    isFromLLgno_isB_ = isFromLLgno_ and isB_;
+    isFromLLgno_isBB_ = isFromLLgno_ and isBB_;
+    isFromLLgno_isGBB_ = isFromLLgno_ and isGBB_;
+    isFromLLgno_isLeptonicB_ = isFromLLgno_ and isLeptonicB_;
+    isFromLLgno_isLeptonicB_C_ = isFromLLgno_ and isLeptonicB_C_;
+    isFromLLgno_isC_ = isFromLLgno_ and isC_;
+    isFromLLgno_isCC_ = isFromLLgno_ and isCC_;
+    isFromLLgno_isGCC_ = isFromLLgno_ and isGCC_;
+    isFromLLgno_isUD_ = isFromLLgno_ and isUD_;
+    isFromLLgno_isS_ = isFromLLgno_ and isS_;
+    isFromLLgno_isG_ = isFromLLgno_ and isG_;
+    isFromLLgno_isUndefined_ = isFromLLgno_ and isUndefined_;
+    
     
     pat::JetCollection h;
 

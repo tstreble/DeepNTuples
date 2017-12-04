@@ -212,7 +212,7 @@ process.patGenJetMatchRecluster = cms.EDProducer("GenJetMatcher",  # cut on delt
 
 process.genJetSequence = cms.Sequence(process.packedGenParticlesForJetsNoNu*process.ak4GenJetsWithNu*process.ak4GenJetsRecluster*process.patGenJetMatchWithNu*process.patGenJetMatchRecluster)
  
-process.load('LLPTag.DisplacedVertex.GenDisplacedVertices_cff')
+process.load('XTag.DisplacedVertex.GenDisplacedVertices_cff')
 
 
 
