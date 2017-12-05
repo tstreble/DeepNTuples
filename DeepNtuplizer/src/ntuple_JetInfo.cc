@@ -440,9 +440,9 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     //LL gluino
     isFromLLgno_ = 0;
 
-    genLL_decayLength_ = 0;
+    genLL_decayLength_ = gRandom->Uniform(-10,10);
     genLL_decayAngle_ = gRandom->Uniform(0,TMath::Pi());
-    genLL_properDecayLength_ = 0;
+    genLL_properDecayLength_ = gRandom->Uniform(-10,10);
 
     float dR_min = 10000;
     for(const auto &genVert : *displacedGenVerticesHandle)
@@ -455,12 +455,12 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
             if(dR<0.4 and dR<dR_min)
             {
                 dR_min = dR;
-                genLL_decayLength_ = genVert.d3d();	    
+                genLL_decayLength_ = std::log10(genVert.d3d());	    
 
                 if(!genVert.motherLongLivedParticle.isNull())
                 {
                     const auto &mother = *(genVert.motherLongLivedParticle);
-                    genLL_properDecayLength_ = genLL_decayLength_ * mother.mass()/mother.p();
+                    genLL_properDecayLength_ = std::log10(genLL_decayLength_ * mother.mass()/mother.p());
                     genLL_decayAngle_ = angle(genJet->p4(),mother.p4());
                     if (isGluino(mother) or isGluinoHadron(mother)) isFromLLgno_ = 1;
                 }
@@ -480,6 +480,19 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     isFromLLgno_isG_ = isFromLLgno_ and isG_;
     isFromLLgno_isUndefined_ = isFromLLgno_ and isUndefined_;
     
+    isB_ = not isFromLLgno_ and isB_;
+    isBB_ = not isFromLLgno_ and isBB_;
+    isGBB_ = not isFromLLgno_ and isGBB_;
+    isLeptonicB_ = not isFromLLgno_ and isLeptonicB_;
+    isLeptonicB_C_ = not isFromLLgno_ and isLeptonicB_C_;
+    isC_ = not isFromLLgno_ and isC_;
+    isCC_ = not isFromLLgno_ and isCC_;
+    isGCC_ = not isFromLLgno_ and isGCC_;
+    isUD_ = not isFromLLgno_ and isUD_;
+    isS_ = not isFromLLgno_ and isS_;
+    isG_ = not isFromLLgno_ and isG_;
+    isUndefined_ = not isFromLLgno_ and isUndefined_;
+    
     
     pat::JetCollection h;
 
@@ -489,7 +502,7 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     jet_corr_pt_ = jet.pt();
     jet_mass_ = jet.mass();
     jet_energy_ = jet.energy();
-    int iterIndex = 0;
+    unsigned int iterIndex = 0;
 
     genDecay_ = -1.;
     // std::cout << "looking for a B"<<jet.eta()<< " "<<jet.phi() <<std::endl;
@@ -497,7 +510,7 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
       if(reco::deltaR(it->eta(),it->phi(),jet.eta(),jet.phi()) < 0.4) 
 	{
 	  //  std::cout <<it->eta()<<" "<<it->phi()<< " "<<reco::deltaR(it->eta(),it->phi(),jet.eta(),jet.phi())<<" "<< sqrt(Bhadron_daughter_[iterIndex].vx()*Bhadron_daughter_[iterIndex].vx()+Bhadron_daughter_[iterIndex].vy()*Bhadron_daughter_[iterIndex].vy())<< " dXY "<<  iterIndex << std::endl;
-	  if(Bhadron_daughter_[iterIndex].vx()!=it->vx()){
+	  if(iterIndex<Bhadron_daughter_.size() and Bhadron_daughter_[iterIndex].vx()!=it->vx()){
 	    float vx = Bhadron_daughter_[iterIndex].vx()-it->vx();
 	    float vy = Bhadron_daughter_[iterIndex].vy()-it->vy();
 	    

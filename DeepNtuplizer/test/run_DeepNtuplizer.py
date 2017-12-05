@@ -8,6 +8,7 @@ import os
 options = VarParsing.VarParsing()
 
 options.register('inputScript','',VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.string,"input Script")
+options.register('percentage','1.0',VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.float,"percentage")
 options.register('outputFile','output',VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.string,"output File (w/o .root)")
 options.register('maxEvents',-1,VarParsing.VarParsing.multiplicity.singleton,VarParsing.VarParsing.varType.int,"maximum events")
 options.register('skipEvents', 0, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "skip N events")
@@ -137,6 +138,9 @@ updateJetCollection(
         explicitJTA = False
 )
 
+process.eventFilter = cms.EDFilter("RandomEventFilter",
+    percentage = cms.double(options.percentage)
+)
 
 process.jecSequence = cms.Sequence(process.patJetCorrFactorsDeepFlavour * process.updatedPatJetsDeepFlavour)
 #process.btagSequence = cms.Sequence(process.pfImpactParameterTagInfosDeepFlavour * process.pfInclusiveSecondaryVertexFinderTagInfosDeepFlavour* process.pfDeepCSVTagInfosDeepFlavour*process.pfCombinedInclusiveSecondaryVertexV2BJetTagsDeepFlavour*process.pfDeepCSVJetTagsDeepFlavour)
@@ -231,7 +235,8 @@ if int(cmsswversion[1])>=8 and int(cmsswversion[2])>=4:
 
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 
-process.p = cms.Path( process.jecSequence +
+process.p = cms.Path( process.eventFilter +
+                      process.jecSequence +
                       #process.btagSequence +
                       process.updateSequence +
                       process.QGTagger +
