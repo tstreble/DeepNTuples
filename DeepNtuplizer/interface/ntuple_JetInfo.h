@@ -215,6 +215,14 @@ public:
 
     float jet_looseId_;
 
+    float jet_NHF_;
+    float jet_NEMF_;
+    float jet_CHF_;
+    float jet_CEMF_;
+    float jet_NumConst_;
+    float jet_NumNeutralParticles_;
+    float jet_CHM_;
+
     // quark/gluon
     float jet_qgl_;
     float QG_ptD_;

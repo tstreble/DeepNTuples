@@ -17,6 +17,7 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
 #include "TVector3.h"
+#include "DataFormats/Math/interface/angle.h"
 
 class TrackInfoBuilder{
 public:
@@ -69,10 +70,10 @@ public:
         trackSip2dSig_=(meas_ip2d.significance());
         trackSip3dVal_=(meas_ip3d.value());
 
-
         trackSip3dSig_=meas_ip3d.significance();
         trackJetDistVal_= jetdist.value();
         trackJetDistSig_= jetdist.significance();
+
 
     }
 
@@ -90,6 +91,7 @@ public:
     const float& getTrackSip2dVal() const {return trackSip2dVal_;}
     const float& getTrackSip3dSig() const {return trackSip3dSig_;}
     const float& getTrackSip3dVal() const {return trackSip3dVal_;}
+
 
 private:
 
@@ -111,6 +113,7 @@ private:
     float trackJetDistVal_;
     float trackJetDistSig_;
 
+
 };
 
 
@@ -131,6 +134,11 @@ void ntuple_pfCands::initBranches(TTree* tree){
     addBranch(tree,"n_Cpfcand", &n_Cpfcand_,"n_Cpfcand_/i");
 
     addBranch(tree,"nCpfcand", &nCpfcand_,"nCpfcand_/f");
+
+    addBranch(tree,"alpha_max", &alpha_max_,"alpha_max_/f");
+    addBranch(tree,"dxy_median", &dxy_median_,"dxy_median_/f");
+    addBranch(tree,"SIP2dSig_median", &SIP2dSig_median_,"SIP2dSig_median_/f");
+    addBranch(tree,"IP2dSig_median", &IP2dSig_median_,"IP2dSig_median_/f");
 
     addBranch(tree,"Cpfcan_pt", &Cpfcan_pt_,"Cpfcan_pt_[n_Cpfcand_]/f");
     addBranch(tree,"Cpfcan_eta", &Cpfcan_eta_,"Cpfcan_eta_[n_Cpfcand_]/f");
@@ -207,6 +215,8 @@ void ntuple_pfCands::initBranches(TTree* tree){
     addBranch(tree,"Cpfcan_chi2",&Cpfcan_chi2_,"Cpfcan_chi2_[n_Cpfcand_]/f");
     addBranch(tree,"Cpfcan_quality",&Cpfcan_quality_,"Cpfcan_quality_[n_Cpfcand_]/f");
 
+
+
     // did not give integers !!
     //  addBranch(tree,"Cpfcan_charge",&Cpfcan_charge_,"Cpfcan_charge_[n_Cpfcand_]/i");
 
@@ -247,13 +257,11 @@ void ntuple_pfCands::readEvent(const edm::Event& iEvent){
 
 bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, const  edm::View<pat::Jet> * coll){
 
-
     float etasign = 1.;
     if (jet.eta()<0) etasign =-1.;
     math::XYZVector jetDir = jet.momentum().Unit();
     GlobalVector jetRefTrackDir(jet.px(),jet.py(),jet.pz());
     const reco::Vertex & pv = vertices()->at(0);
-
 
     std::vector<sorting::sortingClass<size_t> > sortedcharged, sortedneutrals;
 
@@ -289,14 +297,16 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 
     std::vector<size_t> sortedchargedindices,sortedneutralsindices;
 
-        sortedchargedindices=sorting::invertSortingVector(sortedcharged);
-        sortedneutralsindices=sorting::invertSortingVector(sortedneutrals);
+    sortedchargedindices=sorting::invertSortingVector(sortedcharged);
+    sortedneutralsindices=sorting::invertSortingVector(sortedneutrals);    
 
 
-
-
-
-
+    std::map<reco::VertexRef, float> sum_pT_tracks_vtx;
+    float sum_pT_tracks = 0.;
+    std::vector<float> dxy_tracks;
+    std::vector<float> SIP2dSig_tracks;
+    std::vector<float> IP2dSig_tracks;
+    
 
     for (unsigned int i = 0; i <  jet.numberOfDaughters(); i++){
         const pat::PackedCandidate* PackedCandidate_ = dynamic_cast<const pat::PackedCandidate*>(jet.daughter(i));
@@ -313,10 +323,23 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
         /// Split to charged and neutral candidates
         if(PackedCandidate_->charge()!=0 ){
 
+	  if(PackedCandidate_->pt()>1){
+	     sum_pT_tracks_vtx[PackedCandidate_->vertexRef()] += PackedCandidate_->pt();
+	     sum_pT_tracks += PackedCandidate_->pt();
+	  }
+
+	  trackinfo.buildTrackInfo(PackedCandidate_,jetDir,jetRefTrackDir,pv);
+	  dxy_tracks.emplace_back( catchInfsAndBound(fabs(PackedCandidate_->dxy()),0,-50,50) );
+	  //IP2dSig_tracks.emplace_back( catchInfsAndBound(trackinfo.getTrackSip2dSig(), 0, -4e4,4e4 ) );
+	  float sip2dsig = catchInfsAndBound(trackinfo.getTrackSip2dSig(), 0, -4e4,4e4 );
+	  if(sip2dsig!=0){
+	     SIP2dSig_tracks.emplace_back( trackinfo.getTrackSip2dSig() );
+	     IP2dSig_tracks.emplace_back( fabs(trackinfo.getTrackSip2dSig()) );
+	   }
+
+
             size_t fillntupleentry= sortedchargedindices.at(i);
             if(fillntupleentry>=max_pfcand_) continue;
-
-
 
             Cpfcan_pt_[fillntupleentry] = PackedCandidate_->pt();
             Cpfcan_eta_[fillntupleentry] = PackedCandidate_->eta();
@@ -370,8 +393,6 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
             Cpfcan_dphidxy_[fillntupleentry] =   catchInfs(myCov[2][3],-0.03); //zero if pvAssociationQuality ==7 ?
             Cpfcan_dlambdadz_[fillntupleentry]=  catchInfs(myCov[1][4],-0.03); //zero if pvAssociationQuality ==7 ?
              */
-
-            trackinfo.buildTrackInfo(PackedCandidate_,jetDir,jetRefTrackDir,pv);
 
             Cpfcan_BtagPf_trackMomentum_[fillntupleentry]   =catchInfsAndBound(trackinfo.getTrackMomentum(),0,0 ,1000);
             Cpfcan_BtagPf_trackEta_[fillntupleentry]        =catchInfsAndBound(trackinfo.getTrackEta()   ,  0,-5,5);
@@ -459,6 +480,41 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 
     nCpfcand_=n_Cpfcand_;
     nNpfcand_=n_Npfcand_;
+
+    alpha_max_ = 0;
+    dxy_median_ = 0.;
+    IP2dSig_median_ = 0.;
+    SIP2dSig_median_ = 0.;
+
+    for(const auto& it : sum_pT_tracks_vtx){
+      float alpha = it.second / sum_pT_tracks;
+      if(alpha>alpha_max_) alpha_max_ = alpha;
+    }
+
+    size_t size_tracks = dxy_tracks.size();
+    
+    if(size_tracks>0){
+      
+      stable_sort(dxy_tracks.begin(),dxy_tracks.end());
+      if(size_tracks%2 == 0) dxy_median_ = 0.5*( dxy_tracks[size_tracks/2-1] + dxy_tracks[size_tracks/2]);
+      else dxy_median_ = dxy_tracks[size_tracks/2];
+      
+    }
+
+    
+    size_tracks = IP2dSig_tracks.size();
+
+    if(size_tracks>0){
+
+      stable_sort(IP2dSig_tracks.begin(),IP2dSig_tracks.end());
+      if(size_tracks%2 == 0) IP2dSig_median_ = 0.5*( IP2dSig_tracks[size_tracks/2-1] + IP2dSig_tracks[size_tracks/2]);
+      else IP2dSig_median_ = IP2dSig_tracks[size_tracks/2];
+
+      stable_sort(SIP2dSig_tracks.begin(),SIP2dSig_tracks.end());
+      if(size_tracks%2 == 0) SIP2dSig_median_ = 0.5*( SIP2dSig_tracks[size_tracks/2-1] + SIP2dSig_tracks[size_tracks/2]);
+      else SIP2dSig_median_ = SIP2dSig_tracks[size_tracks/2];
+      
+    }
 
     return true; //for making cuts
 }

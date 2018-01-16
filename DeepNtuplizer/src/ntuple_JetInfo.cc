@@ -143,6 +143,15 @@ void ntuple_JetInfo::initBranches(TTree* tree){
     //jet id
     addBranch(tree,"jet_looseId", &jet_looseId_);
 
+    addBranch(tree,"jet_NHF", &jet_NHF_);
+    addBranch(tree,"jet_NEMF", &jet_NEMF_);
+    addBranch(tree,"jet_CHF", &jet_CHF_);
+    addBranch(tree,"jet_CEMF", &jet_CEMF_);
+    addBranch(tree,"jet_NumConst", &jet_NumConst_);
+    addBranch(tree,"jet_NumNeutralParticles", &jet_NumNeutralParticles_);
+    addBranch(tree,"jet_CHM", &jet_CHM_);
+
+
     // quark gluon
     addBranch(tree,"jet_qgl",   &jet_qgl_);  // qg tagger from jmar
     addBranch(tree,"QG_ptD",   &QG_ptD_);   // momentum fraction per jet constituent
@@ -540,8 +549,25 @@ bool ntuple_JetInfo::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
         jet_looseId_ = ((NHF<0.99 && NEMF<0.99 && NumConst>1) && ((abs(jet_eta_)<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || abs(jet_eta_)>2.4) && abs(jet_eta_)<=2.7) ||
                 (NHF<0.98 && NEMF>0.01 && NumNeutralParticles>2 && abs(jet_eta_)>2.7 && abs(jet_eta_)<=3.0 ) ||
                 (NEMF<0.90 && NumNeutralParticles>10 && abs(jet_eta_)>3.0 );
+
+	jet_NHF_ = NHF;
+	jet_NEMF_ = NEMF;
+	jet_CHF_ = CHF;
+	jet_CEMF_ = CEMF;
+	jet_NumConst_ = NumConst;
+	jet_NumNeutralParticles_ = NumNeutralParticles;
+	jet_CHM_ = CHM;	      
+
     }catch(const cms::Exception &e){
-        jet_looseId_ = 1;
+        jet_looseId_ = 1;     
+
+	jet_NHF_ = -1;
+	jet_NEMF_ = -1;
+	jet_CHF_ = -1;
+	jet_CEMF_ = -1;
+	jet_NumConst_ = -1;
+	jet_NumNeutralParticles_ = -1;
+	jet_CHM_ = -1;	         
     }
 
 

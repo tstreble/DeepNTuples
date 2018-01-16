@@ -112,6 +112,10 @@ private:
 
     float Cpfcan_drminsv_[max_pfcand_];
 
+    float alpha_max_;
+    float dxy_median_;
+    float IP2dSig_median_;
+
     //Neutral Pf candidates
     unsigned int n_Npfcand_;
     float nNpfcand_;
