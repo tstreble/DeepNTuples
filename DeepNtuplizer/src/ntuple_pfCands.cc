@@ -137,7 +137,6 @@ void ntuple_pfCands::initBranches(TTree* tree){
 
     addBranch(tree,"alpha_max", &alpha_max_,"alpha_max_/f");
     addBranch(tree,"dxy_median", &dxy_median_,"dxy_median_/f");
-    addBranch(tree,"SIP2dSig_median", &SIP2dSig_median_,"SIP2dSig_median_/f");
     addBranch(tree,"IP2dSig_median", &IP2dSig_median_,"IP2dSig_median_/f");
 
     addBranch(tree,"Cpfcan_pt", &Cpfcan_pt_,"Cpfcan_pt_[n_Cpfcand_]/f");
@@ -484,7 +483,6 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
     alpha_max_ = 0;
     dxy_median_ = 0.;
     IP2dSig_median_ = 0.;
-    SIP2dSig_median_ = 0.;
 
     for(const auto& it : sum_pT_tracks_vtx){
       float alpha = it.second / sum_pT_tracks;
@@ -508,11 +506,7 @@ bool ntuple_pfCands::fillBranches(const pat::Jet & jet, const size_t& jetidx, co
 
       stable_sort(IP2dSig_tracks.begin(),IP2dSig_tracks.end());
       if(size_tracks%2 == 0) IP2dSig_median_ = 0.5*( IP2dSig_tracks[size_tracks/2-1] + IP2dSig_tracks[size_tracks/2]);
-      else IP2dSig_median_ = IP2dSig_tracks[size_tracks/2];
-
-      stable_sort(SIP2dSig_tracks.begin(),SIP2dSig_tracks.end());
-      if(size_tracks%2 == 0) SIP2dSig_median_ = 0.5*( SIP2dSig_tracks[size_tracks/2-1] + SIP2dSig_tracks[size_tracks/2]);
-      else SIP2dSig_median_ = SIP2dSig_tracks[size_tracks/2];
+      else IP2dSig_median_ = IP2dSig_tracks[size_tracks/2];   
       
     }
 
